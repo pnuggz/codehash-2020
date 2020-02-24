@@ -156,7 +156,7 @@ def recalculate_scores():
     running_library_index = OrderedDict(
         sorted(
             running_library_index.items(),
-            key=lambda (key, value): value['score'],
+            key=lambda item: item[1]['score'],
             reverse=True))
 
     # To speed up performance, empty list of books not to duplicate
@@ -212,7 +212,7 @@ def signup_process():
     #For the first time running
     if (signup_index == None):
         recalculate_scores()
-        signup_index = running_library_index.iteritems().next()[1]['key']
+        signup_index = next(iter(running_library_index.items()))[1]['key']
         signup_days_left = running_library_index[signup_index]['signup_days']
         add_books_not_to_duplicate(running_library_index[signup_index])
         return
@@ -233,7 +233,7 @@ def signup_process():
             recalculate_scores()
 
         # Assign new signup index from the next in the running library
-        signup_index = running_library_index.iteritems().next()[1]['key']
+        signup_index = next(iter(running_library_index.items()))[1]['key']
         signup_days_left = running_library_index[signup_index]['signup_days']
         add_books_not_to_duplicate(running_library_index[signup_index])
 
@@ -286,29 +286,35 @@ def process_libraries():
 
 
 def create_output():
-    global final_library_signed
     global final_library
     global final_books_scanned_list
 
     output_file_name = input_file_name.split('.')[0] + '.out'
     f = open(output_file_name, "w+")
-    f.write(str(final_library_signed) + '\n')
+
+    library_count = 0
+    for k, lib_key in enumerate(final_library):
+        if len(final_books_scanned_list[lib_key]['books']) > 0:
+            library_count += 1
+
+    f.write(str(library_count) + '\n')
 
     for k, lib_key in enumerate(final_library):
         line_1 = ''
         line_2 = ''
 
-        line_1 = str(lib_key) + ' ' + str(
-            len(final_books_scanned_list[lib_key]['books']))
+        if len(final_books_scanned_list[lib_key]['books']) > 0:   
+            line_1 = str(lib_key) + ' ' + str(
+                len(final_books_scanned_list[lib_key]['books']))
 
-        for book in final_books_scanned_list[lib_key]['books']:
-            if book == len(final_books_scanned_list[lib_key]['books']):
-                line_2 = line_2 + str(book)
-            else:
-                line_2 = line_2 + str(book) + ' '
-
-        f.write(line_1 + '\n')
-        f.write(line_2 + '\n')
+            for book_index, book in enumerate(final_books_scanned_list[lib_key]['books']):
+                if book_index == len(final_books_scanned_list[lib_key]['books']):
+                    line_2 = line_2 + str(book)
+                else:
+                    line_2 = line_2 + str(book) + ' '
+            
+            f.write(line_1 + '\n')
+            f.write(line_2 + '\n')
 
     f.close()
 
